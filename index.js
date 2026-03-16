@@ -4,6 +4,7 @@ import { connectDB } from "./config/db.js";
 import authRouter from "./routes/auth.js";
 import collaborationsRouter from "./routes/collaborations.js";
 import campaignsRouter from "./routes/campaigns.js";
+import applicationsRouter from "./routes/applications.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -36,6 +37,7 @@ app.get("/", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/collaborations", collaborationsRouter);
 app.use("/api/campaigns", campaignsRouter);
+app.use("/api/applications", applicationsRouter);
 
 // ─── Error Handling ──────────────────────────────────────────────────────────
 app.use(notFound);
