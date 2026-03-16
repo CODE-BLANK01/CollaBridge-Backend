@@ -6,7 +6,9 @@
   "scripts": {
     "start": "OPENSSL_CONF=./openssl.cnf node index.js",
     "dev": "OPENSSL_CONF=./openssl.cnf nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "OPENSSL_CONF=./openssl.cnf node seed.js",
+    "seed:wipe": "OPENSSL_CONF=./openssl.cnf node seed.js --wipe-only"
   },
   "keywords": [],
   "author": "",
