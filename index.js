@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import { connectDB } from "./config/db.js";
+import authRouter from "./routes/auth.js";
 import collaborationsRouter from "./routes/collaborations.js";
 import campaignsRouter from "./routes/campaigns.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
@@ -9,8 +9,23 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 const app = express();
 const port = process.env.PORT || 3000;
 
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
+
 // ─── Middleware ──────────────────────────────────────────────────────────────
-app.use(cors());
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json());
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
@@ -18,6 +33,7 @@ app.get("/", (_req, res) => {
   res.json({ message: "CollaBridge API is running" });
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/collaborations", collaborationsRouter);
 app.use("/api/campaigns", campaignsRouter);
 
