@@ -211,41 +211,72 @@ function generateCampaigns(count) {
   return docs;
 }
 
-function generateDemoCampaigns() {
+function generateDemoBrandCampaigns(count) {
+  const docs = [];
   const now = new Date();
-  const past = new Date("2024-06-01");
+  const past = new Date("2024-01-01");
   const future = new Date("2026-06-30");
 
-  const titles = [
-    "CollaBridge Brand Summer Influencer Series",
-    "CollaBridge Brand Holiday Collection Drop",
-    "CollaBridge Brand Fresh Brand Launch",
-    "CollaBridge Brand Exclusive Product Reveal",
-    "CollaBridge Brand Bold Awareness Campaign",
-    "CollaBridge Brand Premium Tutorial Series",
-    "CollaBridge Brand Iconic GRWM Series",
-    "CollaBridge Brand Next-Gen Unboxing Series",
-    "CollaBridge Brand Ultimate Try-On Haul",
-    "CollaBridge Brand Signature Collab Campaign",
-  ];
-
-  return titles.map((title, i) => {
+  for (let i = 0; i < count; i++) {
+    const adj = pick(CAMPAIGN_ADJECTIVES);
+    const type = pick(CAMPAIGN_TYPES);
     const platform = pick(PLATFORMS);
+    const status = pick(CAMPAIGN_STATUSES);
+    const descFn = pick(DESCRIPTION_TEMPLATES);
+    const reqFn = pick(REQUIREMENTS_TEMPLATES);
     const createdAt = randDate(past, now);
-    return {
+
+    docs.push({
       brandName: "CollaBridge Brand",
-      campaignTitle: title,
-      description: `CollaBridge Brand is looking for authentic ${platform} creators for this campaign. We value real stories and creative freedom.`,
+      campaignTitle: `CollaBridge Brand ${adj} ${type}`,
+      description: descFn("CollaBridge Brand", type, platform),
       platform,
-      budget: randInt(5000, 60000),
-      deadline: randDate(now, future),
-      requirements: `Create engaging ${platform} content that highlights our brand values. Tag @CollaBridgeBrand and use #CB${i + 1}.`,
-      status: "open",
+      budget: randBool(0.85) ? randInt(2000, 80000) : null,
+      deadline: randBool(0.8) ? randDate(now, future) : null,
+      requirements: randBool(0.9) ? reqFn(platform) : null,
+      status,
       internalNotes: pick(INTERNAL_NOTES_TEMPLATES),
       createdAt,
       updatedAt: createdAt,
-    };
-  });
+    });
+  }
+
+  return docs;
+}
+
+function generateDemoCreatorCollabs(count) {
+  const docs = [];
+  const past = new Date("2024-01-01");
+  const future = new Date("2026-06-30");
+  const now = new Date();
+
+  for (let i = 0; i < count; i++) {
+    const brand = pick(BRANDS);
+    const adj = pick(CAMPAIGN_ADJECTIVES);
+    const type = pick(CAMPAIGN_TYPES);
+    const platform = pick(PLATFORMS);
+    const status = pick(COLLAB_STATUSES);
+    const notesFn = pick(PERSONAL_NOTES_TEMPLATES);
+    const createdAt = randDate(past, now);
+    const hasLink =
+      status === "final" || (status === "revision_requested" && randBool(0.6));
+    const slug = `collabridge-creator-${brand.toLowerCase().replace(/\s/g, "-")}-${i}`;
+
+    docs.push({
+      creatorName: "CollaBridge Creator",
+      brandName: brand,
+      campaignTitle: `${brand} ${adj} ${type}`,
+      platform,
+      dueDate: randBool(0.8) ? randDate(now, future) : null,
+      submissionLink: hasLink ? `${pick(SUBMISSION_LINK_BASES)}-${slug}` : null,
+      status,
+      personalNotes: notesFn(brand),
+      createdAt,
+      updatedAt: createdAt,
+    });
+  }
+
+  return docs;
 }
 
 function generateCollaborations(count) {
@@ -379,8 +410,8 @@ async function seed() {
   ]);
   console.log("✓ Inserted 2 users");
 
-  // ── Campaigns (500 random + 10 demo brand) ──────────────────────────────────
-  const campaignDocs = generateCampaigns(500);
+  // ── Campaigns (200 random + 500 demo brand) ─────────────────────────────────
+  const campaignDocs = generateCampaigns(200);
   const campaignResult = await db
     .collection("brandCampaigns")
     .insertMany(campaignDocs);
@@ -389,7 +420,7 @@ async function seed() {
     _id: campaignResult.insertedIds[i],
   }));
 
-  const demoCampaignDocs = generateDemoCampaigns();
+  const demoCampaignDocs = generateDemoBrandCampaigns(500);
   const demoResult = await db
     .collection("brandCampaigns")
     .insertMany(demoCampaignDocs);
@@ -402,10 +433,11 @@ async function seed() {
     `✓ Inserted ${campaignDocs.length + demoCampaignDocs.length} campaigns (${demoCampaignDocs.length} demo brand)`
   );
 
-  // ── Collaborations (600) ────────────────────────────────────────────────────
-  const collabDocs = generateCollaborations(600);
-  await db.collection("creatorCollaborations").insertMany(collabDocs);
-  console.log(`✓ Inserted ${collabDocs.length} collaborations`);
+  // ── Collaborations (100 random + 500 demo creator) ───────────────────────────
+  const collabDocs = generateCollaborations(100);
+  const demoCollabDocs = generateDemoCreatorCollabs(500);
+  await db.collection("creatorCollaborations").insertMany([...collabDocs, ...demoCollabDocs]);
+  console.log(`✓ Inserted ${collabDocs.length + demoCollabDocs.length} collaborations (${demoCollabDocs.length} demo creator)`);
 
   // ── Applications (200) ──────────────────────────────────────────────────────
   const allCampaigns = [...campaignsWithIds, ...demoCampaignsWithIds];
@@ -414,7 +446,7 @@ async function seed() {
   console.log(`✓ Inserted ${appDocs.length} applications`);
 
   const total =
-    2 + campaignDocs.length + demoCampaignDocs.length + collabDocs.length + appDocs.length;
+    2 + campaignDocs.length + demoCampaignDocs.length + collabDocs.length + demoCollabDocs.length + appDocs.length;
   console.log(`\n✓ Total documents inserted: ${total}`);
   console.log("\n── Login credentials ─────────────────────────────────────");
   console.log("  brand    brand@collabridge.com    / password123");

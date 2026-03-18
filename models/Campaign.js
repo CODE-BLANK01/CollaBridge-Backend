@@ -114,5 +114,6 @@ export function buildFilter(query = {}) {
   if (query.status) filter.status = query.status;
   if (query.platform) filter.platform = query.platform;
   if (query.brandName) filter.brandName = { $regex: query.brandName, $options: "i" };
+  if (query.campaignTitle) filter.campaignTitle = { $regex: query.campaignTitle, $options: "i" };
   return filter;
 }
