@@ -15,7 +15,7 @@ export function createUserDoc(data, hashedPassword) {
 }
 
 export function safeUser(doc) {
-  const { password, ...rest } = doc;
+  const { password: _password, ...rest } = doc;
   return rest;
 }
 

@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 import { getDB } from "../config/db.js";
 import * as User from "../models/User.js";
 
