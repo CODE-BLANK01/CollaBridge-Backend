@@ -1,5 +1,5 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { getDB } from "../config/db.js";
 import * as User from "../models/User.js";
 
@@ -11,7 +11,7 @@ function signToken(id, email, role) {
   );
 }
 
-// POST /api/auth/register
+// POST /api/auth/register  (no Passport — validates and creates the user)
 export async function register(req, res, next) {
   try {
     const errors = User.validate(req.body);
@@ -42,35 +42,13 @@ export async function register(req, res, next) {
   }
 }
 
-// POST /api/auth/login
-export async function login(req, res, next) {
-  try {
-    const { email, password } = req.body;
-    if (!email?.trim() || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
-    }
-
-    const db = getDB();
-    const user = await db.collection(User.COLLECTION).findOne({
-      email: email.trim().toLowerCase(),
-    });
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-
-    const token = signToken(user._id, user.email, user.role);
-    res.json({ success: true, token, user: User.safeUser(user) });
-  } catch (err) {
-    next(err);
-  }
+// POST /api/auth/login  (Passport LocalStrategy runs first via route, sets req.user)
+export function login(req, res) {
+  const token = signToken(req.user._id, req.user.email, req.user.role);
+  res.json({ success: true, token, user: User.safeUser(req.user) });
 }
 
-// GET /api/auth/me  (protected)
-export async function getMe(req, res) {
+// GET /api/auth/me  (Passport JwtStrategy runs first via route, sets req.user)
+export function getMe(req, res) {
   res.json({ success: true, user: req.user });
 }

@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import passport from "./config/passport.js";
 import { connectDB } from "./config/db.js";
 import authRouter from "./routes/auth.js";
 import collaborationsRouter from "./routes/collaborations.js";
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
+app.use(passport.initialize());
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
 app.get("/", (_req, res) => {
